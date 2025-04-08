@@ -1,0 +1,6 @@
+./venv
+./data
+./model
+./data 
+Copy_of_Claudine_Thesis_Project.ipynb 
+./model/feature_selector.joblib
