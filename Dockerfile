@@ -16,8 +16,18 @@ RUN git lfs install
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the entire model directory
-COPY model/ /app/model/
+# Create model directory
+RUN mkdir -p /app/model
+
+# Copy model files individually with verification
+COPY model/feature_selector.joblib /app/model/
+COPY model/multi_output_model.joblib /app/model/
+COPY model/label_encoders.joblib /app/model/
+COPY model/inverse_maps.joblib /app/model/
+COPY model/feature_cols.joblib /app/model/
+
+# Verify model files exist
+RUN ls -lh /app/model/
 
 # Copy the rest of the application
 COPY . .

@@ -12,5 +12,4 @@ venv
 .venv
 *.log
 .DS_Store
-*.joblib
-model/ 
+*.joblib 
