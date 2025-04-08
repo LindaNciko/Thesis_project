@@ -1,6 +1,71 @@
-# XGBoost Multiclassification Model and SHAP Visualization
+# Demographic Predictor App
 
-This repository hosts a Streamlit application designed for exploring an XGBoost-based multiclassification model. The app provides users with insights into the model's predictions, feature importance, and SHAP visualizations for interpretability.
+A Streamlit application for predicting demographics based on spending habits.
+
+## Prerequisites
+
+- Docker
+- Git LFS (for handling large model files)
+
+## Setup
+
+1. Install Git LFS if you haven't already:
+```bash
+git lfs install
+```
+
+2. Clone the repository and pull the LFS files:
+```bash
+git clone <repository-url>
+cd <repository-directory>
+git lfs pull
+```
+
+## Building and Running with Docker
+
+1. Build the Docker image:
+```bash
+docker build -t demographic-predictor .
+```
+
+2. Run the container:
+```bash
+docker run -p 8501:8501 demographic-predictor
+```
+
+3. Access the application:
+Open your web browser and navigate to `http://localhost:8501`
+
+## Model Files
+
+The following model files are required and should be present in the `model` directory:
+- `feature_selector.joblib`
+- `multi_output_model.joblib`
+- `label_encoders.joblib`
+- `inverse_maps.joblib`
+- `feature_cols.joblib`
+
+These files are tracked using Git LFS to handle their large size.
+
+## Development
+
+To run the application locally without Docker:
+
+1. Create a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Run the application:
+```bash
+streamlit run app.py
+```
 
 ## Features
 
