@@ -332,4 +332,4 @@ if __name__ == "__main__":
     print("Starting Uvicorn server...")
     # Use reload=True for development to auto-reload on code changes
     # Use host="0.0.0.0" to make it accessible on your network (use with caution)
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main:app", host="127.0.0.1", port=8080, reload=True)
