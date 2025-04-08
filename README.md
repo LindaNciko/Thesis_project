@@ -4,10 +4,11 @@ A Streamlit application for predicting demographics based on spending habits.
 
 ## Prerequisites
 
-- Docker
+- Python 3.9+
+- Git
 - Git LFS (for handling large model files)
 
-## Setup
+## Local Development
 
 1. Install Git LFS if you haven't already:
 ```bash
@@ -21,20 +22,39 @@ cd <repository-directory>
 git lfs pull
 ```
 
-## Building and Running with Docker
-
-1. Build the Docker image:
+3. Create a virtual environment:
 ```bash
-docker build -t demographic-predictor .
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-2. Run the container:
+4. Install dependencies:
 ```bash
-docker run -p 8501:8501 demographic-predictor
+pip install -r requirements.txt
 ```
 
-3. Access the application:
-Open your web browser and navigate to `http://localhost:8501`
+5. Run the application:
+```bash
+streamlit run app.py
+```
+
+## Deployment on Render.com
+
+1. Push your code to GitHub:
+```bash
+git add .
+git commit -m "Prepare for Render deployment"
+git push
+```
+
+2. Go to [Render.com](https://render.com) and:
+   - Create a new Web Service
+   - Connect your GitHub repository
+   - Select the branch to deploy
+   - Choose "Python" as the environment
+   - The service will automatically detect the `render.yaml` configuration
+
+3. Wait for the deployment to complete. Your app will be available at the provided Render URL.
 
 ## Model Files
 
@@ -47,25 +67,11 @@ The following model files are required and should be present in the `model` dire
 
 These files are tracked using Git LFS to handle their large size.
 
-## Development
+## Environment Variables
 
-To run the application locally without Docker:
-
-1. Create a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-3. Run the application:
-```bash
-streamlit run app.py
-```
+The application uses the following environment variables:
+- `PORT`: The port number the application should listen on (automatically set by Render)
+- `PYTHONUNBUFFERED`: Set to 1 for better logging
 
 ## Features
 

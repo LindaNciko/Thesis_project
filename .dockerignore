@@ -11,4 +11,6 @@ venv
 .env
 .venv
 *.log
-.DS_Store 
+.DS_Store
+*.joblib
+model/ 
