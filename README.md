@@ -22,6 +22,146 @@ This repository hosts a Streamlit application designed for exploring an XGBoost-
 ## Go to [Demo](https://retail-consumer-purchase-trends.streamlit.app/)
 ---
 
+## Installation
+
+1. Clone the repository:
+```bash
+git clone [repository-url]
+cd Forecasting-Retail-Consumer-Purchase-Trends
+```
+
+2. Create and activate a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+## Usage
+
+### Starting the Server
+
+Run the application using:
+```bash
+python main.py
+```
+The server will start on `http://127.0.0.1:8000`
+
+### Using the Web Interface
+
+1. Navigate to `http://127.0.0.1:8000` in your web browser
+2. Fill out the form with spending trend information
+3. Submit to receive demographic predictions
+
+### Using the API
+
+Make POST requests to `/predict` endpoint with JSON payload:
+
+```json
+{
+  "Period": "2024-12-20",
+  "Location": "MS1",
+  "Personal Hygiene (eg Soap, toothpaste)": "Less",
+  "Cleaning products": "Less",
+  "Long lasting (dry) groceries": "Less",
+  "Fresh groceries (Fruits, vegetables)": "Not sure",
+  "Medicines/Natural remedies": "Same",
+  "Alcohol beverages": "Same",
+  "Skin care (eg. Body lotion)": "More",
+  "Hair care (eg. Shampoo)": "More",
+  "Entertainment (eg. Restaurants, movies)": "More",
+  "Electronics (eg Phone, Computers)": "Same",
+  "Beauty (eg Makeup, cosmetics, haircuts)": "Same",
+  "Clothing": "Same",
+  "Airtime/Data bundles": "Not sure"
+}
+```
+
+### API Response Format
+
+```json
+{
+  "Gender": "predicted_gender",
+  "Age-group": "predicted_age_group",
+  "Occupation": "predicted_occupation",
+  "Income Level": "predicted_income_level"
+}
+```
+
+## Input Categories
+
+The system accepts spending trend data for the following categories:
+- Personal Hygiene
+- Cleaning Products
+- Long-lasting Groceries
+- Fresh Groceries
+- Medicines/Natural Remedies
+- Alcohol Beverages
+- Skin Care
+- Hair Care
+- Entertainment
+- Electronics
+- Beauty Products
+- Clothing
+- Airtime/Data Bundles
+
+For each category, valid inputs are:
+- "More"
+- "Less"
+- "Same"
+- "Not sure"
+
+## Error Handling
+
+The API includes comprehensive error handling for:
+- Invalid input data
+- Missing required fields
+- Model prediction errors
+- Server-side processing issues
+
+All errors return appropriate HTTP status codes and detailed error messages.
+
+## Development
+
+### Prerequisites
+
+- Python 3.7+
+- FastAPI
+- scikit-learn
+- pandas
+- numpy
+- uvicorn
+
+### Running in Development Mode
+
+```bash
+uvicorn main:app --reload
+```
+
+This enables hot-reloading for development purposes.
+
+## API Documentation
+
+FastAPI provides automatic interactive API documentation:
+- Swagger UI: `http://127.0.0.1:8000/docs`
+- ReDoc: `http://127.0.0.1:8000/redoc`
+
+## License
+
+[Add your license information here]
+
+## Contributing
+
+[Add contribution guidelines here]
+
+## Authors
+
+[Add author information here]
+
 ## Installation and Setup
 
 ### Prerequisites
