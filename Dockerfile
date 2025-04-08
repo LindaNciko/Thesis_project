@@ -1,5 +1,8 @@
 FROM python:3.9-slim
 
+# Add maintainer label
+LABEL maintainer="Linda Nciko <your.email@example.com>"
+
 WORKDIR /app
 
 # Install system dependencies including Git and Git LFS
@@ -40,6 +43,10 @@ ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
 
 # Expose the port Streamlit runs on
 EXPOSE 8501
+
+# Add healthcheck
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8501/ || exit 1
 
 # Command to run the application
 CMD ["streamlit", "run", "app.py"] 
