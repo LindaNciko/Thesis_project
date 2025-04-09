@@ -353,3 +353,55 @@ For inquiries or support, please reach out via:
 
 ## License
 This project is licensed under the MIT License. See the LICENSE file for details.
+
+## Streamlit Deployment Instructions
+
+### Handling Large Model Files
+
+This application includes a large model file (`feature_selector.joblib`, 220MB) which exceeds Streamlit's default file size limits. To deploy successfully, follow these steps:
+
+1. **Upload the large model file to Google Drive**:
+   - Upload the `feature_selector.joblib` file to Google Drive
+   - Make the file publicly accessible by right-clicking and selecting "Share" > "Anyone with the link"
+   - Copy the share link
+
+2. **Get a direct download link**:
+   - From the share link (which looks like `https://drive.google.com/file/d/YOUR_FILE_ID/view?usp=sharing`)
+   - Extract the file ID (the `YOUR_FILE_ID` part)
+   - You'll use this ID with the gdown library
+
+3. **Configure Streamlit secrets**:
+   - In your Streamlit Cloud dashboard, go to your app settings
+   - Add the following to the secrets section:
+   ```
+   SELECTOR_GDRIVE_URL = "YOUR_FILE_ID"
+   ```
+   - Note: Enter just the file ID, not the full URL
+
+4. **Set environment variable**:
+   - In your Streamlit Cloud dashboard, add an environment variable:
+   ```
+   STREAMLIT_DEPLOYMENT = cloud
+   ```
+
+### Deploying to Streamlit Cloud
+
+1. Push your code to a GitHub repository
+2. Log in to [Streamlit Cloud](https://streamlit.io/cloud)
+3. Click "New app"
+4. Connect to your GitHub repository
+5. Select the main file as `app.py`
+6. Deploy the app
+
+The application is configured to:
+- Load small model files directly from the repository
+- Download the large model file (`feature_selector.joblib`) from Google Drive at runtime
+- Cache the model to avoid reloading on every interaction
+
+### Troubleshooting
+
+If you encounter issues:
+1. Verify the Google Drive file is publicly accessible
+2. Check that the file ID in secrets is correct
+3. Ensure gdown is properly installed (it's included in requirements.txt)
+4. Review Streamlit logs for any download errors

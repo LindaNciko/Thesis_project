@@ -3,6 +3,11 @@ import joblib
 import pandas as pd
 import numpy as np
 import streamlit as st
+import tempfile
+import urllib.request
+import gdown
+from pathlib import Path
+import time
 
 # --- Configuration ---
 MODEL_DIR = "model"
@@ -12,22 +17,168 @@ SELECTOR_PATH = os.path.join(MODEL_DIR, 'feature_selector.joblib')
 INVERSE_MAPS_PATH = os.path.join(MODEL_DIR, 'inverse_maps.joblib')
 FEATURE_COLS_PATH = os.path.join(MODEL_DIR, 'feature_cols.joblib')
 
+# --- Environment Variables for Cloud Deployment ---
+# Check for deployment environment - either from environment variable or auto-detect
+DEPLOYMENT_ENV = os.environ.get("STREAMLIT_DEPLOYMENT", "")
+if not DEPLOYMENT_ENV and os.environ.get("STREAMLIT_RUNTIME_EXISTS"):
+    # Auto-detect if we're running on Streamlit Cloud
+    DEPLOYMENT_ENV = "cloud"
+
+# Get file ID from secrets
+SELECTOR_GDRIVE_URL = st.secrets.get("SELECTOR_GDRIVE_URL", "")
+# Fallback for local development without secrets.toml
+if not SELECTOR_GDRIVE_URL and os.path.exists('.streamlit/secrets_example.toml'):
+    st.warning("⚠️ Using example secrets file. For production, create a proper secrets.toml file.")
+
+# --- Helper Functions ---
+def download_from_gdrive(file_id, output_path, show_progress=True):
+    """Download a file from Google Drive with progress indicator"""
+    if show_progress:
+        with st.status("Downloading large model file...") as status:
+            st.write("This may take a few minutes...")
+            progress_bar = st.progress(0)
+            
+            # Create a function to update progress
+            def callback(value):
+                if isinstance(value, int) or isinstance(value, float):
+                    progress_bar.progress(min(value/100, 1.0))
+                
+            start_time = time.time()
+            success = gdown.download(
+                f"https://drive.google.com/uc?id={file_id}", 
+                output_path, 
+                quiet=False,
+                fuzzy=True,
+                speed=callback
+            )
+            elapsed = time.time() - start_time
+            
+            if success:
+                status.update(label=f"✅ Download complete in {elapsed:.1f} seconds", state="complete")
+                return True
+            else:
+                status.update(label="❌ Download failed", state="error")
+                return False
+    else:
+        return gdown.download(f"https://drive.google.com/uc?id={file_id}", output_path, quiet=True)
+
 # --- Load Artifacts ---
-@st.cache_resource
+@st.cache_resource(show_spinner="Loading model artifacts...")
 def load_model_artifacts():
+    """Load all model artifacts with comprehensive error handling"""
     try:
+        # Create model directory if it doesn't exist
         if not os.path.exists(MODEL_DIR):
-            raise FileNotFoundError(f"Model directory '{MODEL_DIR}' not found.")
+            os.makedirs(MODEL_DIR, exist_ok=True)
+            st.info(f"Created model directory: {MODEL_DIR}")
         
-        model = joblib.load(MODEL_PATH)
-        label_encoders = joblib.load(ENCODERS_PATH)
-        selector = joblib.load(SELECTOR_PATH)
-        inverse_maps = joblib.load(INVERSE_MAPS_PATH)
-        original_feature_cols = joblib.load(FEATURE_COLS_PATH)
+        # Dictionary to track loading status
+        artifacts = {
+            "model": {"path": MODEL_PATH, "required": True, "loaded": False},
+            "label_encoders": {"path": ENCODERS_PATH, "required": True, "loaded": False},
+            "inverse_maps": {"path": INVERSE_MAPS_PATH, "required": True, "loaded": False},
+            "feature_cols": {"path": FEATURE_COLS_PATH, "required": True, "loaded": False},
+            "selector": {"path": SELECTOR_PATH, "required": True, "loaded": False}
+        }
         
-        return model, label_encoders, selector, inverse_maps, original_feature_cols
+        # Load smaller artifacts first
+        results = {}
+        for name, info in artifacts.items():
+            if name != "selector":  # Handle selector separately
+                if os.path.exists(info["path"]):
+                    try:
+                        results[name] = joblib.load(info["path"])
+                        artifacts[name]["loaded"] = True
+                    except Exception as e:
+                        st.warning(f"Error loading {name}: {str(e)}")
+                        if info["required"]:
+                            raise Exception(f"Failed to load required artifact: {name}")
+                else:
+                    st.warning(f"Missing artifact: {name} at path {info['path']}")
+                    if info["required"]:
+                        raise Exception(f"Required artifact not found: {name}")
+        
+        # Handle the large selector file differently depending on environment
+        if DEPLOYMENT_ENV == "cloud":
+            st.info("🌐 Running in cloud environment")
+            
+            # Check if the file ID is provided
+            if not SELECTOR_GDRIVE_URL:
+                st.error("⚠️ Missing Google Drive file ID for feature selector")
+                st.info("Please set SELECTOR_GDRIVE_URL in Streamlit secrets")
+                raise Exception("Feature selector URL not configured")
+            
+            # Create a temporary file for downloading
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.joblib') as temp_file:
+                temp_path = temp_file.name
+            
+            # Download the file from Google Drive
+            if download_from_gdrive(SELECTOR_GDRIVE_URL, temp_path):
+                try:
+                    # Load the downloaded model
+                    selector = joblib.load(temp_path)
+                    results["selector"] = selector
+                    artifacts["selector"]["loaded"] = True
+                    # Clean up the temp file
+                    os.unlink(temp_path)
+                except Exception as e:
+                    st.error(f"Failed to load downloaded selector: {str(e)}")
+                    raise
+            else:
+                st.error("Failed to download feature selector from Google Drive")
+                st.info("Check if the file ID is correct and the file is accessible")
+                raise Exception("Download failed")
+        else:
+            # Local development - load directly
+            st.info("🖥️ Running in local environment")
+            if os.path.exists(artifacts["selector"]["path"]):
+                try:
+                    results["selector"] = joblib.load(artifacts["selector"]["path"])
+                    artifacts["selector"]["loaded"] = True
+                except Exception as e:
+                    st.error(f"Error loading selector: {str(e)}")
+                    raise
+            else:
+                st.error(f"Selector file not found at: {artifacts['selector']['path']}")
+                st.info("For local development, ensure the file exists in the model directory")
+                raise FileNotFoundError(f"Selector file not found")
+        
+        # Validate that all required artifacts are loaded
+        missing = [name for name, info in artifacts.items() if info["required"] and not info["loaded"]]
+        if missing:
+            raise Exception(f"Failed to load required artifacts: {', '.join(missing)}")
+        
+        # Return the loaded artifacts in the expected order
+        return (
+            results["model"],
+            results["label_encoders"],
+            results["selector"],
+            results["inverse_maps"],
+            results["feature_cols"]
+        )
     except Exception as e:
-        st.error(f"Error loading model artifacts: {e}")
+        st.error(f"Error loading model artifacts: {str(e)}")
+        
+        # Show troubleshooting information
+        with st.expander("Troubleshooting Information"):
+            st.markdown("""
+            ### Troubleshooting Steps
+            
+            1. **For local development**:
+               - Ensure all model files are in the `model/` directory
+               - Check file permissions
+               
+            2. **For Streamlit Cloud deployment**:
+               - Verify SELECTOR_GDRIVE_URL is set in Streamlit secrets
+               - Confirm the Google Drive file is publicly accessible
+               - Check that STREAMLIT_DEPLOYMENT environment variable is set to "cloud"
+            
+            3. **Common issues**:
+               - File corruption during upload
+               - Incorrect file ID in secrets
+               - Google Drive rate limiting
+            """)
+        
         st.stop()
 
 # --- Initialize Streamlit App ---
@@ -45,7 +196,9 @@ st.markdown("""
 """)
 
 # --- Load Model Artifacts ---
-model, label_encoders, selector, inverse_maps, original_feature_cols = load_model_artifacts()
+with st.spinner("Loading model artifacts..."):
+    model, label_encoders, selector, inverse_maps, original_feature_cols = load_model_artifacts()
+    st.success("✅ Models loaded successfully")
 
 # --- Define Form Fields and Options ---
 form_fields = [

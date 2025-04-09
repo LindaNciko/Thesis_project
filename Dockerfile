@@ -1,52 +1,12 @@
 FROM python:3.9-slim
 
-# Add maintainer label
-LABEL maintainer="Linda Nciko <your.email@example.com>"
-
 WORKDIR /app
 
-# Install system dependencies including Git and Git LFS
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    git \
-    git-lfs \
-    && rm -rf /var/lib/apt/lists/*
-
-# Initialize Git LFS
-RUN git lfs install
-
-# Copy requirements first to leverage Docker cache
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Create model directory
-RUN mkdir -p /app/model
-
-# Copy model files individually with verification
-COPY model/feature_selector.joblib /app/model/
-COPY model/multi_output_model.joblib /app/model/
-COPY model/label_encoders.joblib /app/model/
-COPY model/inverse_maps.joblib /app/model/
-COPY model/feature_cols.joblib /app/model/
-
-# Verify model files exist
-RUN ls -lh /app/model/
-
-# Copy the rest of the application
 COPY . .
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV STREAMLIT_SERVER_PORT=8501
-ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
-ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+EXPOSE 8080
 
-# Expose the port Streamlit runs on
-EXPOSE 8501
-
-# Add healthcheck
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8501/ || exit 1
-
-# Command to run the application
-CMD ["streamlit", "run", "app.py"] 
+CMD ["gunicorn", "main:app", "--workers", "2", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8080"] 
