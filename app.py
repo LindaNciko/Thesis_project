@@ -9,6 +9,14 @@ import gdown
 from pathlib import Path
 import time
 
+# --- Initialize Streamlit App ---
+# This MUST be the first Streamlit command
+st.set_page_config(
+    page_title="Demographic Predictor",
+    page_icon="📊",
+    layout="wide"
+)
+
 # --- Configuration ---
 MODEL_DIR = "model"
 MODEL_PATH = os.path.join(MODEL_DIR, 'multi_output_model.joblib')
@@ -24,11 +32,16 @@ if not DEPLOYMENT_ENV and os.environ.get("STREAMLIT_RUNTIME_EXISTS"):
     # Auto-detect if we're running on Streamlit Cloud
     DEPLOYMENT_ENV = "cloud"
 
-# Get file ID from secrets
-SELECTOR_GDRIVE_URL = st.secrets.get("SELECTOR_GDRIVE_URL", "")
-# Fallback for local development without secrets.toml
-if not SELECTOR_GDRIVE_URL and os.path.exists('.streamlit/secrets_example.toml'):
-    st.warning("⚠️ Using example secrets file. For production, create a proper secrets.toml file.")
+# Get file ID from secrets - handle missing secrets gracefully
+try:
+    SELECTOR_GDRIVE_URL = st.secrets.get("SELECTOR_GDRIVE_URL", "")
+except (FileNotFoundError, Exception) as e:
+    st.warning("⚠️ No secrets file found. Running in local development mode.")
+    SELECTOR_GDRIVE_URL = ""
+
+# Show development mode notice
+if not DEPLOYMENT_ENV and not SELECTOR_GDRIVE_URL:
+    st.info("🖥️ Running in local development mode - will attempt to load model files directly from disk.")
 
 # --- Helper Functions ---
 def download_from_gdrive(file_id, output_path, show_progress=True):
@@ -131,17 +144,63 @@ def load_model_artifacts():
         else:
             # Local development - load directly
             st.info("🖥️ Running in local environment")
-            if os.path.exists(artifacts["selector"]["path"]):
+            selector_path = artifacts["selector"]["path"]
+            if os.path.exists(selector_path):
                 try:
-                    results["selector"] = joblib.load(artifacts["selector"]["path"])
+                    results["selector"] = joblib.load(selector_path)
                     artifacts["selector"]["loaded"] = True
                 except Exception as e:
                     st.error(f"Error loading selector: {str(e)}")
                     raise
             else:
-                st.error(f"Selector file not found at: {artifacts['selector']['path']}")
-                st.info("For local development, ensure the file exists in the model directory")
-                raise FileNotFoundError(f"Selector file not found")
+                # Special handling for missing feature selector in development mode
+                if not os.path.exists(MODEL_DIR):
+                    st.error(f"Model directory not found: {MODEL_DIR}")
+                    st.info("Please create the model directory and add required model files")
+                    raise FileNotFoundError(f"Model directory not found")
+                
+                st.warning(f"⚠️ Feature selector file not found at: {selector_path}")
+                st.info("""
+                For local development without the large model file, you have two options:
+                
+                1. Get the model file:
+                   - Download the feature_selector.joblib file
+                   - Place it in the model/ directory
+                   
+                2. Upload to Google Drive:
+                   - Upload the file to Google Drive
+                   - Share it with "Anyone with the link"
+                   - Get the file ID and add it to .streamlit/secrets.toml
+                """)
+                
+                # Create a simple fallback selector if possible
+                try:
+                    # The selected features file should be available and is small
+                    selected_features_path = os.path.join(MODEL_DIR, 'selected_features.joblib')
+                    if os.path.exists(selected_features_path):
+                        # Try to create a simple selector based on the selected features
+                        from sklearn.feature_selection import SelectKBest
+                        
+                        selected_features = joblib.load(selected_features_path)
+                        
+                        class SimpleSelector:
+                            def __init__(self, feature_names):
+                                self.feature_names = feature_names
+                                
+                            def transform(self, X):
+                                # Return only the features that were selected
+                                return X[self.feature_names] if hasattr(X, 'iloc') else X
+                        
+                        # Create a simple selector using the selected feature names
+                        results["selector"] = SimpleSelector(selected_features)
+                        artifacts["selector"]["loaded"] = True
+                        
+                        st.success("✅ Created simplified feature selector for development")
+                    else:
+                        raise FileNotFoundError(f"Selected features file not found: {selected_features_path}")
+                except Exception as e:
+                    st.error(f"Could not create fallback selector: {str(e)}")
+                    raise Exception(f"Selector file not found and could not create fallback: {str(e)}")
         
         # Validate that all required artifacts are loaded
         missing = [name for name, info in artifacts.items() if info["required"] and not info["loaded"]]
@@ -180,13 +239,6 @@ def load_model_artifacts():
             """)
         
         st.stop()
-
-# --- Initialize Streamlit App ---
-st.set_page_config(
-    page_title="Demographic Predictor",
-    page_icon="📊",
-    layout="wide"
-)
 
 # --- App Title and Description ---
 st.title("Demographic Predictor")
