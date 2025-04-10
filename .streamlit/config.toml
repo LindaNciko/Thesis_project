@@ -1,0 +1,18 @@
+[server]
+# Max size of uploaded files in MB
+maxUploadSize = 250
+
+[theme]
+primaryColor = "#4285F4"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F5F5F5"
+textColor = "#262730"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false
+
+[runner]
+# Increase memory limits
+magicEnabled = true
+fastReruns = true 
