@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -59,4 +60,67 @@
 
     <script src="/static/script.js"></script>
 </body>
+=======
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demographic Predictor</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Pane 1: Image/Welcome -->
+        <div class="image-pane">
+             <div class="welcome-text">
+                <h1>Predict Demographics</h1>
+                <p>Enter spending habit indicators to predict user segments.</p>
+            </div>
+        </div>
+
+        <!-- Pane 2: Input Form Grid -->
+        <div class="input-pane">
+            <h2>Input Features</h2>
+            <form id="prediction-form">
+                {% for field in form_fields %}
+                <div class="form-group">
+                    <label for="{{ field.name }}">{{ field.label }}</label>
+                    <select id="{{ field.name }}" name="{{ field.name }}" data-alias="{{ field.alias or field.name }}" required>
+                         <option value="" disabled selected>Select...</option> <!-- Shorter default -->
+                        {% set options = dropdown_options.get(field.name, []) %}
+                        {% for option in options %}
+                        <option value="{{ option }}">{{ option }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endfor %}
+            </form>
+             <!-- Moved button outside the form grid for better placement -->
+             <button type="submit" form="prediction-form" id="submit-button">Predict</button>
+        </div>
+
+        <!-- Pane 3: Output/Results -->
+        <div class="output-pane">
+            <h3>Prediction Results</h3>
+            <div id="results-area" class="results-area" style="display: none;">
+                 <!-- Content added via JS -->
+                <pre><code id="results-content"></code></pre>
+            </div>
+            <div id="error-area" class="error-area" style="display: none;">
+                 <!-- Content added via JS -->
+                <p id="error-content"></p>
+            </div>
+             <div id="output-placeholder" class="output-placeholder">
+                <p>Results will appear here after prediction.</p>
+             </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+>>>>>>> d458a7e9b212d2945525c7e3f6e22f03e5c5254d
 </html>

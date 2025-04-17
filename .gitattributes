@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # model/*.joblib filter=lfs diff=lfs merge=lfs -text
 # model/old_models/*.pkl filter=lfs diff=lfs merge=lfs -text
 *.joblib filter=lfs diff=lfs merge=lfs -text
@@ -7,3 +8,14 @@ model/label_encoders.joblib filter=lfs diff=lfs merge=lfs -text
 model/inverse_maps.joblib filter=lfs diff=lfs merge=lfs -text
 model/feature_cols.joblib filter=lfs diff=lfs merge=lfs -text
 model/*.joblib filter=lfs diff=lfs merge=lfs -text
+=======
+# model/*.joblib filter=lfs diff=lfs merge=lfs -text
+# model/old_models/*.pkl filter=lfs diff=lfs merge=lfs -text
+*.joblib filter=lfs diff=lfs merge=lfs -text
+model/feature_selector.joblib filter=lfs diff=lfs merge=lfs -text
+model/multi_output_model.joblib filter=lfs diff=lfs merge=lfs -text
+model/label_encoders.joblib filter=lfs diff=lfs merge=lfs -text
+model/inverse_maps.joblib filter=lfs diff=lfs merge=lfs -text
+model/feature_cols.joblib filter=lfs diff=lfs merge=lfs -text
+model/*.joblib filter=lfs diff=lfs merge=lfs -text
+>>>>>>> d458a7e9b212d2945525c7e3f6e22f03e5c5254d
