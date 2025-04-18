@@ -2,7 +2,7 @@
 # Max size of uploaded files in MB
 maxUploadSize = 250
 # Optional: Customize widget styling further if needed
-headless = false # Can sometimes help clean up minor UI elements if needed
+# headless = false # Can sometimes help clean up minor UI elements if needed
 # .streamlit/config.toml
 
 [theme]
