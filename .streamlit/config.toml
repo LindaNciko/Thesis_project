@@ -1,13 +1,21 @@
 [server]
 # Max size of uploaded files in MB
 maxUploadSize = 250
+# Optional: Customize widget styling further if needed
+headless = false # Can sometimes help clean up minor UI elements if needed
+# .streamlit/config.toml
 
 [theme]
-primaryColor = "#4285F4"
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F5F5F5"
-textColor = "#262730"
-font = "sans serif"
+# Colors inspired by the image provided
+primaryColor="#2ECC71" # Medium green for interactive elements (buttons, sliders, etc.)
+backgroundColor="#FFFFFF" # White background for the main content area
+secondaryBackgroundColor="#E8F8F5" # Very light green/mint for the sidebar background
+textColor="#31333F" # Dark grey/black for text for good contrast
+font="sans serif" # Standard sans-serif font
+
+# Hide top right menu and footer
+[ui]
+hideTopBar = false
 
 [browser]
 gatherUsageStats = false
